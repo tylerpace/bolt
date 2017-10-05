@@ -97,7 +97,16 @@ HELP
 
     def create_option_parser(results)
       OptionParser.new('') do |opts|
-        opts.on('-n', '--nodes x,y,z', Array, 'Nodes to connect to') do |nodes|
+        opts.on(
+          '-n', '--nodes x,y,z', Array,
+          'Node(s) to connect to in URI format [protocol://]host[:port]',
+          'Eg. --nodes bolt.puppet.com',
+          'Eg. --nodes localhost,ssh://nix.com:2222,winrm://windows.puppet.com',
+          "\n",
+          '* Windows nodes must specify protocol with winrm://',
+          '* protocol is `ssh` by default, may be `ssh` or `winrm`',
+          '* port is `22` by default for SSH, `5985` for winrm (Optional)'
+        ) do |nodes|
           results[:nodes] = nodes
         end
         opts.on('-u', '--user USER',
@@ -256,6 +265,13 @@ HELP
         rescue LoadError
           raise Bolt::CLIError, "Puppet must be installed to execute tasks"
         end
+
+        Puppet::Util::Log.newdestination(:console)
+        Puppet[:log_level] = if Bolt.log_level == Logger::DEBUG
+                               'debug'
+                             else
+                               'notice'
+                             end
       end
 
       if options[:mode] == 'plan'
@@ -312,11 +328,18 @@ HELP
       puts result
     end
 
+    def colorize(result, stream)
+      color = result.success? ? "\033[32m" : "\033[31m"
+      stream.print color if stream.isatty
+      yield
+      stream.print "\033[0m" if stream.isatty
+    end
+
     def print_results(results, elapsed_time)
       results.each_pair do |node, result|
-        result.colorize($stdout) { $stdout.puts "#{node.host}:" }
+        colorize(result, $stdout) { $stdout.puts "#{node.host}:" }
         $stdout.puts
-        result.print_to_stream($stdout)
+        $stdout.puts result.message
         $stdout.puts
       end
 
