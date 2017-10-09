@@ -340,9 +340,9 @@ ERROR:  Error installing bolt:
 
 See [Native Extensions](./INSTALL.md#native-extensions) for installation instructions.
 
-### Bolt does not support submitting task arguments via stdin to PowerShell
+### Bolt raises the error `Puppet must be installed to execute tasks`
 
-Tasks written in PowerShell can receive arguments only as environment variables.
+When using the bolt gem from source, you may receive the error `Puppet must be installed to execute tasks` when trying to run tasks or plans. See [INSTALL.md](./INSTALL.md) on how to install Bolt from source.
 
 ### Bolt user and password cannot be specified when running plans
 
